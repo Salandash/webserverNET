@@ -1,61 +1,109 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Net;
+using System.IO;
 using System.Net.Sockets;
+using System.Threading;
+using System.Web;
+
 
 namespace WebServer_Console
 {
+
+    //Clase que maneja el loop donde corre el listener
     public class cLoop
     {
+        int port = 8080;
+        string host = "localhost:";
+
+        public string GetVerb(Stream request)
+        {
+            bool b = true;
+            int aux;
+            string rstring= "";
+
+            while(b)
+            {
+                aux = request.ReadByte();
+
+                if (aux == '\n')
+                {
+                    break;
+                }
+                if (aux == ' ')
+                {
+                    break;
+                }
+                
+                rstring += Convert.ToChar(aux);
+            }
+
+            return rstring;
+        }
+
+        public void GetAuth(Stream request)
+        {
+            HttpContext context = HttpContext.Current;
+
+            string authHeader = context.Request.Headers["Authorization"];
+
+            if (authHeader != null && authHeader.StartsWith("Basic"))
+            {
+                string usepass = authHeader.Substring("Basic ".Length).Trim();
+
+                int seperatorIndex = usepass.IndexOf(':');
+
+                string user = usepass.Substring(0, seperatorIndex);
+                string pass = usepass.Substring(seperatorIndex + 1);
+
+                Console.WriteLine("Username = " + user);
+                Console.WriteLine("Password = " + pass);
+            }
+            else
+            {
+                throw new Exception("The authorization header is either empty or isn't Basic.");
+            }
+   
+
+
+        }
+
         public void loop()
         {
+            TcpListener oListener = new TcpListener(port);
+            TcpClient oClient = new TcpClient();
+            oListener.Start();
+
             while (true)
             {
-                Console.WriteLine("Thread Corriendo");
+                oClient = oListener.AcceptTcpClient();
+
+                Stream stream = new BufferedStream(oClient.GetStream());
+
+                Console.WriteLine(GetVerb(stream));
+                GetAuth(stream);
+
+
+                oClient.Close();
             }
+
         }
     }
-    class Server
-    {
-        private const int port = 8080;
-        private const string host = "localhost:";
 
+    //Clase servidor
+    public class Server
+    {
+        
+
+        public Server() { }
 
         static void Main(string[] args)
         {
             try
             {
                 cLoop oLoop = new cLoop();
-                TcpClient oClient = new TcpClient();
-                TcpListener oListener = new TcpListener(port);
                 Thread oThread = new Thread( new ThreadStart(oLoop.loop));
 
-                oClient = oListener.AcceptTcpClient();
-                oListener.Start();
-
-                if (oClient.GetStream().CanRead)
-                {
-                    NetworkStream ns = oClient.GetStream();
-                    byte[] bytes = new byte[1024];
-                    int bytesRead = ns.Read(bytes, 0, bytes.Length);
-                    Console.WriteLine(Encoding.ASCII.GetString(bytes, 0, bytesRead));
-
-                    oThread.Start();
-
-                }
-                else
-                {
-                    Console.WriteLine("No se puede leer la data");
-                }
-
-
-                oThread.Abort();
-                oListener.Stop();
-                oClient.Close();
+                oThread.Start();
+                                
 
             }
             catch (Exception e)
