@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Text;
 using System.IO;
+using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Web;
 
 
@@ -13,7 +16,10 @@ namespace WebServer_Console
     {
         int port = 8080;
         string host = "localhost:";
+        StreamContent streamContent;
 
+
+        //Metodo que retorna el verbo de la petición al servidor
         public string GetVerb(Stream request)
         {
             bool b = true;
@@ -39,32 +45,79 @@ namespace WebServer_Console
             return rstring;
         }
 
-        public void GetAuth(Stream request)
+        //Metodo que imprime en consola las credenciales de autenticación.
+        public void _GetAuth(Stream request)
         {
-            HttpContext context = HttpContext.Current;
+            byte[] byteData;
+            string decodified;
+            string[] splitString;
+            string sAux="";
+            bool b = true;
+            int iAux;
+            string base64;
 
-            string authHeader = context.Request.Headers["Authorization"];
-
-            if (authHeader != null && authHeader.StartsWith("Basic"))
+            while(b)
             {
-                string usepass = authHeader.Substring("Basic ".Length).Trim();
+                iAux = request.ReadByte();
+                if (iAux == '\n')
+                {
+                    break;
+                }
 
-                int seperatorIndex = usepass.IndexOf(':');
-
-                string user = usepass.Substring(0, seperatorIndex);
-                string pass = usepass.Substring(seperatorIndex + 1);
-
-                Console.WriteLine("Username = " + user);
-                Console.WriteLine("Password = " + pass);
+                if (iAux == '\r')
+                {
+                    continue;
+                }
+                if (iAux == -1)
+                {
+                    Thread.Sleep(1);
+                    continue;
+                };
+                sAux += Convert.ToChar(iAux);
             }
-            else
+
+            base64 = sAux.Split(' ')[1]; 
+
+            byteData = Convert.FromBase64String(sAux); 
+
+            decodified = Encoding.UTF8.GetString(byteData);
+
+            splitString = decodified.Split(':');
+
+            if (splitString.Length < 2)
             {
-                throw new Exception("The authorization header is either empty or isn't Basic.");
+                Console.WriteLine("Error en petición");
             }
-   
 
+
+
+            Console.WriteLine(splitString[0]);
+            Console.WriteLine(splitString[1]);
+        }
+
+        /// Método que imprime en consola la extensión del archivo buscado en la petición.
+        public void _GetExt(Stream request)
+        {
+            byte[] byteData;
+            string decodified;
+            string[] splitString;
+            string aux;
+            string[] extension;
+
+            string base64 = request.ToString();
+
+            aux = base64.Split(' ')[1]; //Se divide el request en string
+
+            byteData = Convert.FromBase64String(aux);
+
+            decodified = Encoding.UTF8.GetString(byteData);
+
+            extension = decodified.Split('.');
+
+            Console.WriteLine("."+extension[1]);
 
         }
+    
 
         public void loop()
         {
@@ -78,8 +131,9 @@ namespace WebServer_Console
 
                 Stream stream = new BufferedStream(oClient.GetStream());
 
+                _GetAuth(stream);
                 Console.WriteLine(GetVerb(stream));
-                GetAuth(stream);
+                
 
 
                 oClient.Close();
