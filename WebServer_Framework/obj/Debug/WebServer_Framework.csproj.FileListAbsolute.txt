@@ -1,0 +1,5 @@
+C:\Users\William\documents\visual studio 2015\Projects\WebServer_Console\WebServer_Framework\bin\Debug\WebServer_Framework.dll
+C:\Users\William\documents\visual studio 2015\Projects\WebServer_Console\WebServer_Framework\bin\Debug\WebServer_Framework.pdb
+C:\Users\William\documents\visual studio 2015\Projects\WebServer_Console\WebServer_Framework\obj\Debug\WebServer_Framework.csprojResolveAssemblyReference.cache
+C:\Users\William\documents\visual studio 2015\Projects\WebServer_Console\WebServer_Framework\obj\Debug\WebServer_Framework.dll
+C:\Users\William\documents\visual studio 2015\Projects\WebServer_Console\WebServer_Framework\obj\Debug\WebServer_Framework.pdb

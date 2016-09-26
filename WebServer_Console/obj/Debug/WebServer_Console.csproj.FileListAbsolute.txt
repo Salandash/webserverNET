@@ -6,3 +6,5 @@ C:\Users\William\documents\visual studio 2015\Projects\WebServer_Console\WebServ
 C:\Users\William\documents\visual studio 2015\Projects\WebServer_Console\WebServer_Console\obj\Debug\WebServer_Console.pdb
 C:\Users\William\documents\visual studio 2015\Projects\WebServer_Console\WebServer_Console\bin\Debug\Microsoft.VisualStudio.Threading.dll
 C:\Users\William\documents\visual studio 2015\Projects\WebServer_Console\WebServer_Console\bin\Debug\Microsoft.VisualStudio.Threading.xml
+C:\Users\William\documents\visual studio 2015\Projects\WebServer_Console\WebServer_Console\bin\Debug\WebServer_Framework.dll
+C:\Users\William\documents\visual studio 2015\Projects\WebServer_Console\WebServer_Console\bin\Debug\WebServer_Framework.pdb

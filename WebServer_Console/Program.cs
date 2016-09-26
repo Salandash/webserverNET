@@ -6,7 +6,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
-
+using WebServer_Framework;
 
 namespace WebServer_Console
 {
@@ -14,146 +14,104 @@ namespace WebServer_Console
     //Clase que maneja el loop donde corre el listener
     public class cLoop
     {
-        int port = 8080;
-        string host = "localhost:";
-        StreamContent streamContent;
-
-
-        //Metodo que retorna el verbo de la petición al servidor
-        public string GetVerb(Stream request)
+        int port;
+        string host;
+        public cLoop(int p)
         {
-            bool b = true;
-            int aux;
-            string rstring= "";
-
-            while(b)
-            {
-                aux = request.ReadByte();
-
-                if (aux == '\n')
-                {
-                    break;
-                }
-                if (aux == ' ')
-                {
-                    break;
-                }
-                
-                rstring += Convert.ToChar(aux);
-            }
-
-            return rstring;
+            port = p;
+            host = "localhost";
         }
-
-        //Metodo que imprime en consola las credenciales de autenticación.
-        public void _GetAuth(Stream request)
-        {
-            byte[] byteData;
-            string decodified;
-            string[] splitString;
-            string sAux="";
-            bool b = true;
-            int iAux;
-            string base64;
-
-            while(b)
-            {
-                iAux = request.ReadByte();
-                if (iAux == '\n')
-                {
-                    break;
-                }
-
-                if (iAux == '\r')
-                {
-                    continue;
-                }
-                if (iAux == -1)
-                {
-                    Thread.Sleep(1);
-                    continue;
-                };
-                sAux += Convert.ToChar(iAux);
-            }
-
-            base64 = sAux.Split(' ')[1]; 
-
-            byteData = Convert.FromBase64String(sAux); 
-
-            decodified = Encoding.UTF8.GetString(byteData);
-
-            splitString = decodified.Split(':');
-
-            if (splitString.Length < 2)
-            {
-                Console.WriteLine("Error en petición");
-            }
-
-
-
-            Console.WriteLine(splitString[0]);
-            Console.WriteLine(splitString[1]);
-        }
-
-        /// Método que imprime en consola la extensión del archivo buscado en la petición.
-        public void _GetExt(Stream request)
-        {
-            byte[] byteData;
-            string decodified;
-            string[] splitString;
-            string aux;
-            string[] extension;
-
-            string base64 = request.ToString();
-
-            aux = base64.Split(' ')[1]; //Se divide el request en string
-
-            byteData = Convert.FromBase64String(aux);
-
-            decodified = Encoding.UTF8.GetString(byteData);
-
-            extension = decodified.Split('.');
-
-            Console.WriteLine("."+extension[1]);
-
-        }
-    
 
         public void loop()
         {
             TcpListener oListener = new TcpListener(port);
             TcpClient oClient = new TcpClient();
             oListener.Start();
-
+            Console.WriteLine("Listening on" + host + " " + port);
+            
             while (true)
             {
                 oClient = oListener.AcceptTcpClient();
-
                 Stream stream = new BufferedStream(oClient.GetStream());
+                StreamWriter resStream = new StreamWriter(oClient.GetStream());
+                cRequest req = new cRequest(stream);
 
-                _GetAuth(stream);
-                Console.WriteLine(GetVerb(stream));
-                
 
+                req._printVerb();
+                req._printUrl();
+                req._printAuth();
+
+                if(req.bWantFile() == true)
+                {
+                    Console.WriteLine("Fetching the file manager...");
+
+                    if(req._fileManager() == "image")
+                    {
+                        
+                    }
+                    else if(req._fileManager() == "secret")
+                    {
+                        
+                    }
+                    else
+                    {
+                        resStream.Write("HTTP/1.0 401 Unauthorized");
+                        resStream.Write(Environment.NewLine);
+                        resStream.Write(Environment.NewLine);
+
+                        resStream.Write("ERROR 401: The request requires valid user authentication.");
+                    }
+                }
+                else
+                {
+                    resStream.Write("HTTP/1.0 404 Not Found");
+                    resStream.Write(Environment.NewLine);
+                    resStream.Write(Environment.NewLine);
+
+                    resStream.Write("ERROR 404: The server has not found anything matching the Request-URL.");
+                }
 
                 oClient.Close();
             }
 
         }
+
+
     }
 
     //Clase servidor
     public class Server
     {
-        
-
+        int port;
+        string path;
         public Server() { }
 
         static void Main(string[] args)
         {
+            Server server = new Server();
+            if(args.Length == 0)
+            {
+               server.port = 8080;
+               server.path = "localhost:";
+            }
+            else
+            {
+                //Validar puerto ingresado
+                if (Int32.TryParse(args[0], out server.port))
+                    Console.WriteLine("Valid port");
+                else
+                {
+                    Console.WriteLine("Invalid port. Will be using default port.");
+                }
+
+                server.path = args[1];
+
+            }
+
+
             try
             {
-                cLoop oLoop = new cLoop();
+                cLoop oLoop = new cLoop(server.port, server.host);
                 Thread oThread = new Thread( new ThreadStart(oLoop.loop));
 
                 oThread.Start();
